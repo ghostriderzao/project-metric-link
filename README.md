@@ -1,7 +1,7 @@
-# Metric Synchronization (Gc = ±1.0857) Across High-Redshift JWST Active Galactic Nuclei and Euclid DR1-Foundation Strong-Lensing Catalogs
+y# Metric Synchronization (Gc = ±1.0857) Across High-Redshift JWST Active Galactic Nuclei and Euclid DR1-Foundation Strong-Lensing Catalogs
 
 **Author:** Michael James Gross  
-**Primary Archive / DOI:** `https://doi.org/10.5281/zenodo.XXXXXXX` (Continuum: 110 Zenodo DOIs & OSF #108)
+**Primary Archive / DOI:** `https://doi.org/10.5281/zenodo.24182514` (Continuum: 110 Zenodo DOIs & OSF #108)
 
 ## Overview
 Unscaled past-light-cone measurements compress proper evolutionary intervals and distort kinematic mass estimators across high-redshift observations. This repository provides the executable coordinate transformation operators for the Metric Synchronization framework anchored on:
