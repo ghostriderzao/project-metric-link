@@ -1,4 +1,4 @@
-y# Metric Synchronization (Gc = ±1.0857) Across High-Redshift JWST Active Galactic Nuclei and Euclid DR1-Foundation Strong-Lensing Catalogs
+# Metric Synchronization (Gc = ±1.0857) Across High-Redshift JWST Active Galactic Nuclei and Euclid DR1-Foundation Strong-Lensing Catalogs
 **Scale-Invariant Metric Synchronization for Euclid DR1 ECLIPSE Strong Lensing & Hubble Tension**
 
 * **Author:** Michael James Gross
@@ -9,7 +9,6 @@ y# Metric Synchronization (Gc = ±1.0857) Across High-Redshift JWST Active Galac
 * **Einstein Radius Residual Offset:** $\Delta \theta_E / \theta_E = 0.1787 \left(\frac{z_s - z_l}{1 + z_s}\right)$
 * **Hubble Constant Synchronization:** $H'_0 = G_c \cdot H_0 = 1.0857 \times 67.36 = 73.13\text{ km/s/Mpc}$
 
-    Click the green Commit changes... button in the top-right corner, then click Commit
 
 
 **Author:** Michael James Gross  
