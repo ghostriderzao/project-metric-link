@@ -31,5 +31,11 @@ Unscaled past-light-cone measurements compress proper evolutionary intervals and
    * Spectroscopic BAO standard-ruler scaling (`H(z) * D_A(z)`) across `0.9 < z < 1.8`.
 
 ## Usage
-Run `sync_operators.py` with standard Python 3 (no external dependencies required) to reproduce all table values and Euclid DR1 predictions.# project-metric-link
-metric-synchronization
+## Repository Modules & Usage
+
+All scripts run with standard Python 3 (zero external dependencies required):
+
+1. `sync_operators.py` — Core metric invariants ($G_c = \pm 1.0857$, $|\det M| = 1.1787$, $\delta = 0.1787$), JWST black hole temporal/virial de-biasing (`GHZ9`, `Abell2744-QSO1`), and proper spatial mapping (`J1602+4228AB`).
+2. `euclid_dr1_pipeline.py` — Live Euclid DR1-Foundation ECLIPSE strong-lens extraction and $\chi^2$ residual scoring.
+3. `dspl_lensing_ratio.py` — Double-source-plane lens (DSPL) inner-to-outer Einstein radius ratio ($\theta_{E,1}/\theta_{E,2}$) shift for the 84 DR1 DSPL candidates (`arXiv:2611.20166`).
+4. `bao_shear_pipeline.py` — 3D spectroscopic BAO Alcock-Paczynski scaling ($0.9 < z < 1.8$) and cosmic shear $S_8$ transformation for Euclid DR1 Complete.
