@@ -1,4 +1,4 @@
-# Metric Synchronization (Gc = ±1.0857) Across High-Redshift JWST Active Galactic Nuclei and Euclid DR1-Foundation Strong-Lensing Catalogs
+ # Metric Synchronization (Gc = ±1.0857) Across High-Redshift JWST Active Galactic Nuclei and Euclid DR1-Foundation Strong-Lensing Catalogs
 **Scale-Invariant Metric Synchronization for Euclid DR1 ECLIPSE Strong Lensing & Hubble Tension**
 
 * **Author:** Michael James Gross
@@ -39,3 +39,18 @@ All scripts run with standard Python 3 (zero external dependencies required):
 2. `euclid_dr1_pipeline.py` — Live Euclid DR1-Foundation ECLIPSE strong-lens extraction and $\chi^2$ residual scoring.
 3. `dspl_lensing_ratio.py` — Double-source-plane lens (DSPL) inner-to-outer Einstein radius ratio ($\theta_{E,1}/\theta_{E,2}$) shift for the 84 DR1 DSPL candidates (`arXiv:2611.20166`).
 4. `bao_shear_pipeline.py` — 3D spectroscopic BAO Alcock-Paczynski scaling ($0.9 < z < 1.8$) and cosmic shear $S_8$ transformation for Euclid DR1 Complete.
+## Citation
+
+If you use these Metric Synchronization operators or the Euclid DR1 residual pipeline in your analysis, please cite:
+
+```bibtex
+@software{gross_2026_metric_link,
+  author       = {Gross, Michael James},
+  title        = {{project-metric-link: Metric Synchronization Operators and Euclid DR1 Residual Pipeline}},
+  month        = nov,
+  year         = 2026,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.24182514},
+  url          = {[https://doi.org/10.5281/zenodo.24182514](https://doi.org/10.5281/zenodo.24182514)},
+  note         = {GitHub repository: [https://github.com/ghostriderzao/project-metric-link](https://github.com/ghostriderzao/project-metric-link)}
+}
