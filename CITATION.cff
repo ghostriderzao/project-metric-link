@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software or the Metric Synchronization operators in your analysis, please cite it using the metadata below."
+title: "project-metric-link: Metric Synchronization Operators and Euclid DR1 Residual Pipeline"
+authors:
+  - family-names: "Gross"
+    given-names: "Michael James"
+doi: 10.5281/zenodo.24182514
+url: "https://github.com/ghostriderzao/project-metric-link"
+repository-code: "https://github.com/ghostriderzao/project-metric-link"
+license: MIT
+date-released: 2026-11-19
+keywords:
+  - "Euclid DR1"
+  - "strong gravitational lensing"
+  - "metric synchronization"
+  - "cosmological residuals"
+  - "astrometry"
+  - "Cheng et al. 2026"
