@@ -158,7 +158,6 @@ def evaluate_eclipse_sync_residuals(
     }
     return df, summary
 
-
 def audit_dspl_einstein_ratios(
     eclipse_df: pd.DataFrame,
     dspl_mass_df: pd.DataFrame,
@@ -177,4 +176,134 @@ def audit_dspl_einstein_ratios(
     elif "lens_type" in eclipse_df.columns:
         dspl_mask = eclipse_df["lens_type"].str.upper().str.contains("DSPL", na=False)
     else:
-        raise KeyError("eclipse_df must contain either 'is_dspl' or 'lens_type
+        raise KeyError("eclipse_df must contain either 'is_dspl' or 'lens_type'.")
+
+    dspl_cat = eclipse_df.loc[dspl_mask & eclipse_df["grade"].isin(["A", "B"])].copy()
+    dspl = pd.merge(dspl_cat, dspl_mass_df, on=key_col, how="inner", suffixes=("", "_mass"))
+
+    if dr1_clean_df is not None and "object_id" in dr1_clean_df.columns:
+        dspl = pd.merge(
+            dspl,
+            dr1_clean_df[["object_id", "z_best", "z_source", "blue_grism_halpha_flag"]],
+            left_on=key_col,
+            right_on="object_id",
+            how="left",
+        )
+        if "z_lens" in dspl.columns:
+            dspl["z_lens"] = dspl["z_best"].fillna(dspl["z_lens"])
+        else:
+            dspl["z_lens"] = dspl["z_best"]
+
+    th1 = np.minimum(dspl["theta_e1_median_pdf"].to_numpy(), dspl["theta_e2_median_pdf"].to_numpy())
+    th2 = np.maximum(dspl["theta_e1_median_pdf"].to_numpy(), dspl["theta_e2_median_pdf"].to_numpy())
+    valid = np.isfinite(th1) & np.isfinite(th2) & (th1 > 0.0)
+    dspl = dspl.loc[valid].copy()
+    th1, th2 = th1[valid], th2[valid]
+
+    ratio_obs = th2 / th1
+    dspl["theta_e1_inner"] = th1
+    dspl["theta_e2_outer"] = th2
+    dspl["ratio_obs_e2_e1"] = ratio_obs
+    dspl["delta_from_gc"] = np.abs(ratio_obs - G_C)
+    dspl["delta_from_det_m"] = np.abs(ratio_obs - DET_M)
+
+    summary = {
+        "dspl_candidates_isolated": int(len(dspl_cat)),
+        "dspl_modeled_pairs_evaluated": int(len(dspl)),
+        "median_ratio_obs_e2_e1": round(float(np.median(ratio_obs)), 4) if len(dspl) else np.nan,
+        "mean_ratio_obs_e2_e1": round(float(np.mean(ratio_obs)), 4) if len(dspl) else np.nan,
+        "within_5pct_of_gc_count": int(np.sum(np.abs(ratio_obs / G_C - 1.0) <= 0.05)),
+        "within_5pct_of_det_m_count": int(np.sum(np.abs(ratio_obs / DET_M - 1.0) <= 0.05)),
+    }
+
+    z_cols = {"z_lens", "z_source_1", "z_source_2"}
+    if z_cols.issubset(dspl.columns):
+        z_mask = (
+            dspl["z_lens"].notna()
+            & dspl["z_source_1"].notna()
+            & dspl["z_source_2"].notna()
+            & (dspl["z_source_2"] > dspl["z_source_1"])
+            & (dspl["z_source_1"] > dspl["z_lens"])
+        )
+        if z_mask.any():
+            zd = dspl.loc[z_mask, "z_lens"].to_numpy()
+            zs1 = dspl.loc[z_mask, "z_source_1"].to_numpy()
+            zs2 = dspl.loc[z_mask, "z_source_2"].to_numpy()
+
+            d_s1 = _angular_diameter_distance_mpc(np.zeros_like(zs1), zs1)
+            d_s2 = _angular_diameter_distance_mpc(np.zeros_like(zs2), zs2)
+            d_ds1 = _angular_diameter_distance_mpc(zd, zs1)
+            d_ds2 = _angular_diameter_distance_mpc(zd, zs2)
+
+            eta_std = (d_s1 * d_ds2) / (d_ds1 * d_s2)
+            eta_gc = eta_std * G_C
+
+            r_sub = dspl.loc[z_mask, "ratio_obs_e2_e1"].to_numpy()
+            err_std = np.abs(r_sub - eta_std)
+            err_gc = np.abs(r_sub - eta_gc)
+
+            dspl.loc[z_mask, "eta_cosmological_std"] = eta_std
+            dspl.loc[z_mask, "eta_cosmological_gc"] = eta_gc
+            dspl.loc[z_mask, "dspl_gc_improves_fit"] = err_gc < err_std
+
+            summary["dspl_with_redshifts_count"] = int(z_mask.sum())
+            summary["dspl_gc_improves_fit_count"] = int(np.sum(err_gc < err_std))
+            summary["dspl_median_err_std"] = round(float(np.median(err_std)), 4)
+            summary["dspl_median_err_gc"] = round(float(np.median(err_gc)), 4)
+
+    return dspl, summary
+
+
+def run_pipeline(
+    eclipse_csv_path: str | None = None,
+    dspl_csv_path: str | None = None,
+    use_live_tap: bool = False,
+    tap_limit: int = 10000,
+    output_dir: str = "outputs",
+) -> None:
+    """
+    Unified runner for single-lens residual testing and the 76-DSPL ratio audit.
+    Exports CSV results when real catalog paths are supplied.
+    """
+    dr1_clean_df = fetch_and_clean_dr1_tap(limit=tap_limit) if use_live_tap else None
+
+    if eclipse_csv_path and Path(eclipse_csv_path).exists():
+        eclipse_df = pd.read_csv(eclipse_csv_path)
+        dspl_mass_df = pd.read_csv(dspl_csv_path) if (dspl_csv_path and Path(dspl_csv_path).exists()) else eclipse_df
+        mode = "LIVE ECLIPSE CATALOG"
+    else:
+        mode = "OFFLINE VERIFICATION (SYNTHETIC SCHEMA)"
+        eclipse_df = pd.DataFrame({
+            "object_id": [1001, 1002, 1003, 1004],
+            "grade": ["A", "A", "B", "A"],
+            "is_dspl": [True, True, False, False],
+            "einstein_radius_eff_median_pdf": [0.85, 0.93, 0.78, 1.12],
+            "log10_stellar_mass_median_pdf": [11.39, 11.42, 11.31, 11.55],
+        })
+        dspl_mass_df = pd.DataFrame({
+            "object_id": [1001, 1002],
+            "theta_e1_median_pdf": [0.72, 0.85],
+            "theta_e2_median_pdf": [1.06, 0.93],
+            "z_lens": [0.50, 0.45],
+            "z_source_1": [1.20, 1.15],
+            "z_source_2": [2.50, 1.85],
+        })
+
+    single_df, single_stats = evaluate_eclipse_sync_residuals(eclipse_df, dr1_clean_df=dr1_clean_df)
+    dspl_df, dspl_stats = audit_dspl_einstein_ratios(eclipse_df, dspl_mass_df, dr1_clean_df=dr1_clean_df)
+
+    print(f"=== {mode} ===")
+    print("Single-Lens Audit:", single_stats)
+    print("DSPL Ratio Audit: ", dspl_stats)
+
+    if mode == "LIVE ECLIPSE CATALOG":
+        out_path = Path(output_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        single_df.to_csv(out_path / "eclipse_single_lens_sync_audit.csv", index=False)
+        dspl_df.to_csv(out_path / "eclipse_dspl_ratio_audit.csv", index=False)
+        print(f"Saved audit CSVs to {out_path.resolve()}")
+
+
+if __name__ == "__main__":
+    # Run offline self-test by default; pass real ECLIPSE CSV paths and use_live_tap=True for full catalog run
+    run_pipeline(use_live_tap=False)
