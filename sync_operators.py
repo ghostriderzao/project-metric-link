@@ -74,3 +74,56 @@ if __name__ == "__main__":
     print(f"J1602+4228AB 1st Order (18,100 ly): {rescale_distance_first_order(18100.0):.2f} ly")
     print(f"J1602+4228AB 2nd Order (18,100 ly): {rescale_distance_second_order(18100.0):.2f} ly")
     print(f"Euclid ECLIPSE Offset (z_l=0.5, z_s=2.0): +{euclid_einstein_radius_offset(0.5, 2.0) * 100:.2f}%")
+def compute_stellar_ml_scaling(observed_alpha_imf=1.4, z_form=None, g_c=1.0857):
+    """
+    Evaluate universal gravitational/metric coupling scaling (G_c = 1.0857)
+    against high-redshift stellar mass-to-light (M/L) mismatch factors
+    (e.g., Cheng et al. 2026, Nature Astronomy, alpha_IMF = 1.1 to 4.0).
+
+    Parameters
+    ----------
+    observed_alpha_imf : float
+        Measured M_dyn / M_phot ratio (default: 1.4 sample median; 3.0-4.0 extreme).
+    z_form : float or None
+        Optional formation redshift to evaluate (1 + z_form)^delta compounding.
+    g_c : float
+        Universal Metric Synchronization constant (default: 1.0857).
+
+    Returns
+    -------
+    dict
+        Scaling factors across linear, metric determinant (|det M| = G_c^2),
+        electron-scattering luminosity (G_c^4), Kramers-opacity luminosity (G_c^7.5),
+        combined dynamical + stellar M/L multipliers, and unexplained residual.
+    """
+    det_m = g_c ** 2          # ~1.1787 second-order metric determinant
+    delta = det_m - 1.0       # ~0.1787 fractional residual
+
+    # Homologous stellar luminosity & main-sequence M/L scaling (L ~ G^4 to G^7.5)
+    ml_electron_scattering = g_c ** 4     # ~1.3894x (matches 1.40 median within 0.8%)
+    ml_kramers_opacity = g_c ** 7.5       # ~1.8528x (radiative main-sequence scaling)
+
+    # Combined dynamical (|det M| = G_c^2) + stellar M/L scaling
+    combined_lower = det_m * ml_electron_scattering   # G_c^6   ~ 1.6377x
+    combined_mid = det_m * ml_kramers_opacity         # G_c^9.5 ~ 2.1839x
+
+    if z_form is not None and z_form > 0:
+        z_factor = (1.0 + z_form) ** delta
+        combined_high_z = (g_c ** 3) * ml_kramers_opacity * z_factor
+    else:
+        z_factor = 1.0
+        combined_high_z = (g_c ** 3) * ml_kramers_opacity  # G_c^10.5 ~ 2.3711x
+
+    return {
+        "G_c": round(g_c, 6),
+        "det_M": round(det_m, 6),
+        "delta": round(delta, 6),
+        "observed_alpha_imf": observed_alpha_imf,
+        "ml_electron_scattering_Gc4": round(ml_electron_scattering, 4),
+        "ml_kramers_opacity_Gc7_5": round(ml_kramers_opacity, 4),
+        "combined_lower_Gc6": round(combined_lower, 4),
+        "combined_mid_Gc9_5": round(combined_mid, 4),
+        "combined_high_z": round(combined_high_z, 4),
+        "residual_vs_combined_high_z": round(observed_alpha_imf / combined_high_z, 4),
+    }
+
